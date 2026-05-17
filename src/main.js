@@ -71,18 +71,19 @@ animateText(container, points, texts);
   function pointerMove({ global: { x, y } }) {
     if (!dragging) return;
 
-    const lineCount = 5; // 平行线条数量
-    const maxRadius = 50; // 起始宽度
-    const minRadius = 10; // 末端细度
+    const lineCount = 5;
+    const maxRadius = 50;
+    const minRadius = 10;
 
     if (lastDrawnPoint) {
       const dx = x - lastDrawnPoint.x;
       const dy = y - lastDrawnPoint.y;
+      // Typical values: 0.5–5 for slow drag, 5–20 for medium, 20–50 for fast movement
       const distance = Math.sqrt(dx * dx + dy * dy);
 
       for (let i = 0; i < lineCount; i++) {
-        const offsetX = (Math.random() - 0.5) * 20; // 横向偏移
-        const offsetY = (Math.random() - 0.5) * 20; // 纵向偏移
+        const offsetX = (Math.random() - 0.5) * 20;
+        const offsetY = (Math.random() - 0.5) * 20;
         const width = maxRadius - (distance / 50) * (maxRadius - minRadius);
 
         line
