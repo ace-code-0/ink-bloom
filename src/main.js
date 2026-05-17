@@ -9,6 +9,8 @@ import {
   RenderTexture,
   Sprite,
 } from 'pixi.js';
+import bgGrass from './assets/images/bg_grass.jpg';
+import bgRotate from './assets/images/bg_rotate.jpg';
 
 // textAnimation
 const container = document.getElementById('app');
@@ -25,7 +27,7 @@ animateText(container, points, texts);
 
   // Append the application canvas to the document body
   document.body.appendChild(app.canvas);
-  Object.assign(app.view.style, {
+  Object.assign(app.canvas.style, {
     position: 'absolute',
     top: '0',
     left: '0',
@@ -41,22 +43,13 @@ animateText(container, points, texts);
   const line = new Graphics();
 
   // Load the textures
-  await Assets.load([
-    'https://pixijs.com/assets/bg_grass.jpg',
-    'https://pixijs.com/assets/bg_rotate.jpg',
-  ]);
+  await Assets.load([bgGrass, bgRotate]);
 
   const { width, height } = app.screen;
   const stageSize = { width, height };
 
-  const background = Object.assign(
-    Sprite.from('https://pixijs.com/assets/bg_grass.jpg'),
-    stageSize,
-  );
-  const imageToReveal = Object.assign(
-    Sprite.from('https://pixijs.com/assets/bg_rotate.jpg'),
-    stageSize,
-  );
+  const background = Object.assign(Sprite.from(bgGrass), stageSize);
+  const imageToReveal = Object.assign(Sprite.from(bgRotate), stageSize);
   const renderTexture = RenderTexture.create(stageSize);
   const renderTextureSprite = new Sprite(renderTexture);
 
@@ -76,23 +69,27 @@ animateText(container, points, texts);
   let lastDrawnPoint = null;
 
   function pointerMove({ global: { x, y } }) {
-    if (dragging) {
-      brush.position.set(x, y);
-      app.renderer.render({
-        container: brush,
-        target: renderTexture,
-        clear: false,
-        skipUpdateTransform: false,
-      });
-      // Smooth out the drawing a little bit to make it look nicer
-      // this connects the previous drawn point to the current one
-      // using a line
-      if (lastDrawnPoint) {
+    if (!dragging) return;
+
+    const lineCount = 5; // 平行线条数量
+    const maxRadius = 50; // 起始宽度
+    const minRadius = 10; // 末端细度
+
+    if (lastDrawnPoint) {
+      const dx = x - lastDrawnPoint.x;
+      const dy = y - lastDrawnPoint.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      for (let i = 0; i < lineCount; i++) {
+        const offsetX = (Math.random() - 0.5) * 20; // 横向偏移
+        const offsetY = (Math.random() - 0.5) * 20; // 纵向偏移
+        const width = maxRadius - (distance / 50) * (maxRadius - minRadius);
+
         line
-          .clear()
-          .moveTo(lastDrawnPoint.x, lastDrawnPoint.y)
-          .lineTo(x, y)
-          .stroke({ width: 100, color: 0xffffff });
+          .stroke({ width, color: 0xffffff })
+          .moveTo(lastDrawnPoint.x + offsetX, lastDrawnPoint.y + offsetY)
+          .lineTo(x + offsetX, y + offsetY);
+
         app.renderer.render({
           container: line,
           target: renderTexture,
@@ -100,9 +97,10 @@ animateText(container, points, texts);
           skipUpdateTransform: false,
         });
       }
-      lastDrawnPoint = lastDrawnPoint || new Point();
-      lastDrawnPoint.set(x, y);
     }
+
+    lastDrawnPoint = lastDrawnPoint || new Point();
+    lastDrawnPoint.set(x, y);
   }
 
   function pointerDown(event) {

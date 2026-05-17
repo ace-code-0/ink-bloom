@@ -13,6 +13,7 @@ export function animateText(container, points, texts) {
     span.style.opacity = 0;
     span.style.zIndex = 1;
     span.style.transition = 'all 2s ease-out, opacity 1.5s ease-in';
+    span.style.userSelect = 'none';
     container.appendChild(span);
     textElements.push({
       el: span,
