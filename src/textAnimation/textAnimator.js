@@ -11,6 +11,7 @@ export function animateText(container, points, texts) {
     span.style.left = `${centerX}px`;
     span.style.top = `${centerY}px`;
     span.style.opacity = 0;
+    span.style.zIndex = 1;
     span.style.transition = 'all 2s ease-out, opacity 1.5s ease-in';
     container.appendChild(span);
     textElements.push({
