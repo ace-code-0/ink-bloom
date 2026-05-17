@@ -71,23 +71,21 @@ animateText(container, points, texts);
   function pointerMove({ global: { x, y } }) {
     if (!dragging) return;
 
-    const lineCount = 5;
-    const maxRadius = 50;
-    const minRadius = 10;
+    const lineCount = 1;
 
     if (lastDrawnPoint) {
       const dx = x - lastDrawnPoint.x;
       const dy = y - lastDrawnPoint.y;
       // Typical values: 0.5–5 for slow drag, 5–20 for medium, 20–50 for fast movement
-      const distance = Math.sqrt(dx * dx + dy * dy);
 
       for (let i = 0; i < lineCount; i++) {
-        const offsetX = (Math.random() - 0.5) * 20;
-        const offsetY = (Math.random() - 0.5) * 20;
-        const width = maxRadius - (distance / 50) * (maxRadius - minRadius);
+        // const offsetX = (Math.random() - 0.5) * 20;
+        // const offsetY = (Math.random() - 0.5) * 20;
+        const offsetX = Math.random() * 20;
+        const offsetY = Math.random() * 20;
 
         line
-          .stroke({ width, color: 0xffffff })
+          .stroke({ width: 2, color: 0xffffff })
           .moveTo(lastDrawnPoint.x + offsetX, lastDrawnPoint.y + offsetY)
           .lineTo(x + offsetX, y + offsetY);
 
