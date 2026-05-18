@@ -17,15 +17,10 @@ const container = document.getElementById('app');
 const points = generateHeartPoints(100, 12);
 animateText(container, points, texts);
 
-// PIXI
+// PIXI (毛笔遮罩)
 (async () => {
-  // Create a new application
   const app = new Application();
-
-  // Initialize the application
   await app.init({ resizeTo: window });
-
-  // Append the application canvas to the document body
   document.body.appendChild(app.canvas);
   Object.assign(app.canvas.style, {
     position: 'absolute',
@@ -33,37 +28,30 @@ animateText(container, points, texts);
     left: '0',
     width: '100%',
     height: '100%',
-    zIndex: '0', // 如果想放在背景层
+    zIndex: '0',
   });
 
-  // prepare circle texture, that will be our brush
-  const brush = new Graphics().circle(0, 0, 50).fill({ color: 0xffffff });
-
-  // Create a line that will interpolate the drawn points
-  const line = new Graphics();
-
-  // Load the textures
   await Assets.load([bgGrass, bgRotate]);
-
   const { width, height } = app.screen;
-  const stageSize = { width, height };
 
-  const background = Object.assign(Sprite.from(bgGrass), stageSize);
-  const imageToReveal = Object.assign(Sprite.from(bgRotate), stageSize);
-  const renderTexture = RenderTexture.create(stageSize);
+  const background = Object.assign(Sprite.from(bgGrass), { width, height });
+  const imageToReveal = Object.assign(Sprite.from(bgRotate), { width, height });
+
+  const renderTexture = RenderTexture.create({ width, height });
   const renderTextureSprite = new Sprite(renderTexture);
 
   imageToReveal.mask = renderTextureSprite;
-
   app.stage.addChild(background, imageToReveal, renderTextureSprite);
 
   app.stage.eventMode = 'static';
   app.stage.hitArea = app.screen;
-  app.stage
-    .on('pointerdown', pointerDown)
-    .on('pointerup', pointerUp)
-    .on('pointerupoutside', pointerUp)
-    .on('pointermove', pointerMove);
+
+  // 毛笔线条
+  const line = new Graphics();
+  const brushLines = Array.from({ length: 25 }, () => ({
+    offsetX: Math.random() * 20 - 10,
+    offsetY: Math.random() * 20 - 10,
+  }));
 
   let dragging = false;
   let lastDrawnPoint = null;
@@ -71,44 +59,38 @@ animateText(container, points, texts);
   function pointerMove({ global: { x, y } }) {
     if (!dragging) return;
 
-    const lineCount = 1;
-
     if (lastDrawnPoint) {
-      const dx = x - lastDrawnPoint.x;
-      const dy = y - lastDrawnPoint.y;
-      // Typical values: 0.5–5 for slow drag, 5–20 for medium, 20–50 for fast movement
-
-      for (let i = 0; i < lineCount; i++) {
-        // const offsetX = (Math.random() - 0.5) * 20;
-        // const offsetY = (Math.random() - 0.5) * 20;
-        const offsetX = Math.random() * 20;
-        const offsetY = Math.random() * 20;
-
+      for (const point of brushLines) {
         line
-          .stroke({ width: 2, color: 0xffffff })
-          .moveTo(lastDrawnPoint.x + offsetX, lastDrawnPoint.y + offsetY)
-          .lineTo(x + offsetX, y + offsetY);
-
-        app.renderer.render({
-          container: line,
-          target: renderTexture,
-          clear: false,
-          skipUpdateTransform: false,
-        });
+          .moveTo(
+            lastDrawnPoint.x + point.offsetX,
+            lastDrawnPoint.y + point.offsetY,
+          )
+          .lineTo(x + point.offsetX, y + point.offsetY)
+          .stroke({ width: 2, color: 0xffffff });
       }
+      // 渲染到 renderTexture
+      app.renderer.render(line, { renderTexture, clear: false });
     }
 
-    lastDrawnPoint = lastDrawnPoint || new Point();
+    if (!lastDrawnPoint) lastDrawnPoint = new Point();
     lastDrawnPoint.set(x, y);
   }
 
   function pointerDown(event) {
     dragging = true;
-    pointerMove(event);
+    lastDrawnPoint = new Point(event.global.x, event.global.y);
   }
 
   function pointerUp() {
     dragging = false;
     lastDrawnPoint = null;
+    setTimeout(() => line.clear(), 5000);
   }
+
+  app.stage
+    .on('pointerdown', pointerDown)
+    .on('pointerup', pointerUp)
+    .on('pointerupoutside', pointerUp)
+    .on('pointermove', pointerMove);
 })();
